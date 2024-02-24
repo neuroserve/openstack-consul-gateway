@@ -1,6 +1,6 @@
 locals {
     nomad_version="1.7.3"
-    consul_version="1.17.2"
+    consul_version="1.17.3"
     envoy_version="1.27.2"
     cni_version="1.3.0"
     podman_version="0.4.2"
@@ -101,6 +101,7 @@ resource "tls_cert_request" "consul" {
     dns_names = [
         "consul",
         "consul.local",
+        "consul-gateway-${count.index}.server.${var.config.domain_name}.consul",
     ]
 
     subject {
@@ -272,6 +273,26 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8501tcp" {
   security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "sr_8502tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8502
+  port_range_max    = 8502
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8503tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8503
+  port_range_max    = 8503
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "sr_4646tcp" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -312,6 +333,27 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4648udp" {
   security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "sr_8443tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8443
+  port_range_max    = 8443
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8443udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 8443
+  port_range_max    = 8443
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+}
+
+
 resource "openstack_networking_floatingip_v2" "gw_flip" {
   count = var.config.client_nodes
   pool  = "ext01"
@@ -345,6 +387,7 @@ resource "openstack_compute_instance_v2" "gw" {
   metadata = {
      nomad-role = "client"
      consul-role = "client"
+     public-ipv4 = "${element(openstack_networking_floatingip_v2.gw_flip.*.address, count.index)}"
   }
 
   connection {
@@ -372,6 +415,7 @@ resource "openstack_compute_instance_v2" "gw" {
         inline = [
             "sudo apt-get update",
             "sudo mkdir -p /etc/consul/certificates",
+            "sudo mkdir -p /etc/consul/tokens",
             "sudo mkdir -p /opt/consul",
             "sudo useradd -d /opt/consul consul",
             "sudo chown consul /opt/consul",
@@ -475,7 +519,7 @@ resource "openstack_compute_instance_v2" "gw" {
            datacenter_name = var.config.datacenter_name,
            domain_name = var.config.domain_name,
            os_domain_name = var.config.os_domain_name,
-           node_name = "nomad-client-${count.index}",
+           node_name = "consul-gateway-${count.index}",
            bootstrap_expect = var.config.client_nodes,
            upstream_dns_servers = var.config.dns_servers,
            auth_url = "${var.auth_url}",
@@ -489,9 +533,10 @@ resource "openstack_compute_instance_v2" "gw" {
   provisioner "file" {
      content = templatefile("${path.module}/templates/consul.hcl.tpl", {
         datacenter_name = var.config.consul_datacenter_name,
-        node_name = "nomad-client-${count.index}"
+        node_name = "consul-gateway-${count.index}"
         encryption_key = var.config.consul_encryption_key,
         os_domain_name = var.config.os_domain_name,
+        floatingip = "${element(openstack_networking_floatingip_v2.gw_flip.*.address, count.index)}",
         auth_url = "${var.auth_url}",
         user_name = "${var.user_name}",
         password = "${var.password}",
@@ -524,7 +569,7 @@ resource "openstack_compute_instance_v2" "gw" {
   provisioner "remote-exec" {
         inline = [
             "sudo apt-get update",
-            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin tmux telnet dnsutils",
         ]
   }
 
