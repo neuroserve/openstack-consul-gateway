@@ -2,6 +2,7 @@ data_dir           = "/opt/nomad"
 enable_syslog      = true
 region             = "${os_region}"
 datacenter         = "${datacenter_name}"
+name               = "${node_name}"
 client {
   enabled          = true
   server_join {
@@ -19,6 +20,18 @@ tls {
 
   verify_server_hostname = false
   verify_https_client    = false
+}
+
+consul {
+  grpc_ca_file = "/etc/consul/certificates/ca.pem"
+  grpc_address = "127.0.0.1:8503"
+  ca_file      = "/etc/consul/certificates/ca.pem"
+  cert_file    = "/etc/consul/certificates/cert.pem"
+  key_file     = "/etc/consul/certificates/private_key.pem"
+  ssl          = true
+  address      = "127.0.0.1:8501"
+  auto_advertise = true
+  client_service_name = "${node_name}"
 }
 
 telemetry {
