@@ -60,6 +60,8 @@ resource "tls_cert_request" "nomad" {
         "nomad.local",
         "server.${var.config.datacenter_name}.nomad",
         "nomad.service.${var.config.domain_name}",
+        "localhost",
+        "127.0.0.1",
     ]
 
     subject {
@@ -102,6 +104,8 @@ resource "tls_cert_request" "consul" {
         "consul",
         "consul.local",
         "consul-gateway-${count.index}.server.${var.config.domain_name}.consul",
+        "localhost",
+        "127.0.0.1",
     ]
 
     subject {
@@ -138,8 +142,8 @@ resource "openstack_compute_keypair_v2" "user_keypair" {
   public_key = file("${var.config.keypair}")
 }
 
-resource "openstack_networking_secgroup_v2" "sg_nomad_client" {
-  name        = "sg_nomad_client"
+resource "openstack_networking_secgroup_v2" "sg_consul_gateway" {
+  name        = "sg_consul_gateway"
   description = "Security Group for servergroup"
 }
 
@@ -150,7 +154,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_ssh" {
   port_range_min    = 22
   port_range_max    = 22
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_dns1" {
@@ -160,7 +164,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_dns1" {
   port_range_min    = 53
   port_range_max    = 53
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_dns2" {
@@ -170,7 +174,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_dns2" {
   port_range_min    = 53
   port_range_max    = 53
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8300tcp" {
@@ -180,7 +184,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8300tcp" {
   port_range_min    = 8300
   port_range_max    = 8300
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8300udp" {
@@ -190,7 +194,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8300udp" {
   port_range_min    = 8300
   port_range_max    = 8300
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8301tcp" {
@@ -200,7 +204,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8301tcp" {
   port_range_min    = 8301
   port_range_max    = 8301
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8301udp" {
@@ -210,7 +214,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8301udp" {
   port_range_min    = 8301
   port_range_max    = 8301
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8302tcp" {
@@ -220,7 +224,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8302tcp" {
   port_range_min    = 8302
   port_range_max    = 8302
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8302udp" {
@@ -230,7 +234,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8302udp" {
   port_range_min    = 8302
   port_range_max    = 8302
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8600tcp" {
@@ -240,7 +244,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8600tcp" {
   port_range_min    = 8600
   port_range_max    = 8600
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8600udp" {
@@ -250,7 +254,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8600udp" {
   port_range_min    = 8600
   port_range_max    = 8600
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8500tcp" {
@@ -260,7 +264,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8500tcp" {
   port_range_min    = 8500
   port_range_max    = 8500
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8501tcp" {
@@ -270,7 +274,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8501tcp" {
   port_range_min    = 8501
   port_range_max    = 8501
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8502tcp" {
@@ -280,7 +284,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8502tcp" {
   port_range_min    = 8502
   port_range_max    = 8502
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8503tcp" {
@@ -290,7 +294,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8503tcp" {
   port_range_min    = 8503
   port_range_max    = 8503
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4646tcp" {
@@ -300,7 +304,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4646tcp" {
   port_range_min    = 4646
   port_range_max    = 4646
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4647tcp" {
@@ -310,7 +314,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4647tcp" {
   port_range_min    = 4647
   port_range_max    = 4647
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4648tcp" {
@@ -320,7 +324,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4648tcp" {
   port_range_min    = 4648
   port_range_max    = 4648
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4648udp" {
@@ -330,7 +334,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4648udp" {
   port_range_min    = 4648
   port_range_max    = 4648
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8443tcp" {
@@ -340,7 +344,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8443tcp" {
   port_range_min    = 8443
   port_range_max    = 8443
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_8443udp" {
@@ -350,7 +354,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_8443udp" {
   port_range_min    = 8443
   port_range_max    = 8443
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client.id
+  security_group_id = openstack_networking_secgroup_v2.sg_consul_gateway.id
 }
 
 
@@ -371,7 +375,7 @@ resource "openstack_compute_instance_v2" "gw" {
   flavor_name     = var.config.flavor_name
   key_pair        = openstack_compute_keypair_v2.user_keypair.name
   count           = var.config.client_nodes
-  security_groups = ["sg_nomad_client", "default"]   
+  security_groups = ["sg_consul_gateway", "default"]   
   scheduler_hints {
     group = openstack_compute_servergroup_v2.nomadcluster.id
   }

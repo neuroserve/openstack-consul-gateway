@@ -21,6 +21,7 @@ advertise_addr_wan = "${floatingip}"
 translate_wan_addrs = true
 
 ports {
+  https    = 8501
   grpc     = 8502
   grpc_tls = 8503
 }
