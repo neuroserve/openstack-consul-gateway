@@ -518,7 +518,17 @@ resource "openstack_compute_instance_v2" "gw" {
     destination = "/etc/docker/daemon.json"
    }
 
-  provisioner "file" {
+   provisioner "file" {
+    source = "${path.root}/files/10-consul.dnsmasq"
+    destination = "/etc/dnsmasq.d/10-consul"
+   }
+
+   provisioner "file" {
+    source = "${path.root}/files/dnsmasq.conf"
+    destination = "/etc/dnsmasq.conf"
+   }
+
+   provisioner "file" {
        content = templatefile("${path.module}/templates/nomad.hcl.tpl", {
            datacenter_name = var.config.datacenter_name,
            domain_name = var.config.domain_name,
@@ -530,6 +540,7 @@ resource "openstack_compute_instance_v2" "gw" {
            user_name = "${var.user_name}",
            password = "${var.password}",
            os_region   = "${var.config.os_region}",
+           token = "${var.config.nomad_client_token}",
        })
        destination = "/etc/nomad/nomad.hcl"
   }
@@ -573,7 +584,7 @@ resource "openstack_compute_instance_v2" "gw" {
   provisioner "remote-exec" {
         inline = [
             "sudo apt-get update",
-            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin tmux telnet dnsutils",
+            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin tmux telnet dnsutils dnsmasq",
         ]
   }
 
@@ -634,12 +645,14 @@ resource "openstack_compute_instance_v2" "gw" {
 
   provisioner "remote-exec" {
         inline = [
-            "sudo systemctl restart systemd-resolved",
-            "sudo rm /etc/resolv.conf",
-            "sudo ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf",
+            "sudo apt-get install -y dnsmasq",
+            "sudo systemctl disable systemd-resolved",
+            "sudo systemctl stop systemd-resolved",
+            "sudo systemctl enable dnsmasq",
+            "sudo systemctl start dnsmasq",
+            "sudo systemctl daemon-reload",
         ]
   }
-
 }
 
 resource "openstack_compute_servergroup_v2" "nomadcluster" {

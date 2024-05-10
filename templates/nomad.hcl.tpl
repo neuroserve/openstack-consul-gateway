@@ -32,6 +32,7 @@ consul {
   address      = "127.0.0.1:8501"
   auto_advertise = true
   client_service_name = "${node_name}"
+  token = "${token}"
 }
 
 telemetry {
