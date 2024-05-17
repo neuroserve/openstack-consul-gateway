@@ -519,16 +519,6 @@ resource "openstack_compute_instance_v2" "gw" {
    }
 
    provisioner "file" {
-    source = "${path.root}/files/10-consul.dnsmasq"
-    destination = "/etc/dnsmasq.d/10-consul"
-   }
-
-   provisioner "file" {
-    source = "${path.root}/files/dnsmasq.conf"
-    destination = "/etc/dnsmasq.conf"
-   }
-
-   provisioner "file" {
        content = templatefile("${path.module}/templates/nomad.hcl.tpl", {
            datacenter_name = var.config.datacenter_name,
            domain_name = var.config.domain_name,
@@ -584,7 +574,7 @@ resource "openstack_compute_instance_v2" "gw" {
   provisioner "remote-exec" {
         inline = [
             "sudo apt-get update",
-            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin tmux telnet dnsutils dnsmasq",
+            "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin tmux telnet dnsutils",
         ]
   }
 
@@ -648,9 +638,25 @@ resource "openstack_compute_instance_v2" "gw" {
             "sudo apt-get install -y dnsmasq",
             "sudo systemctl disable systemd-resolved",
             "sudo systemctl stop systemd-resolved",
+        ]
+  }
+
+  provisioner "file" {
+    source = "${path.root}/files/10-consul.dnsmasq"
+    destination = "/etc/dnsmasq.d/10-consul"
+  }
+
+  provisioner "file" {
+    source = "${path.root}/files/dnsmasq.conf"
+    destination = "/etc/dnsmasq.conf"
+  }
+
+  provisioner "remote-exec" {
+        inline = [
             "sudo systemctl enable dnsmasq",
             "sudo systemctl start dnsmasq",
             "sudo systemctl daemon-reload",
+            "sudo systemctl restart dnsmasq &",
         ]
   }
 }
