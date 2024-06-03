@@ -30,7 +30,7 @@ recursors = ["62.138.222.111","62.138.222.222"]
 
 #acl = {
 #  enabled = true
-#  default_policy = "allow"
+#  default_policy = "allow"                      # keep on "allow" until acls are setup correctly - then switch to "deny"
 #  down_policy = "extend-cache"
 #  enable_token_persistence = true
 #
